@@ -3,17 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
     <title>微觉 AI | MicroSense AI - 身体资产管理系统</title>
-    <meta name="description" content="微觉 AI (MicroSense AI) 是一款将身体感知资产化的管理工具。通过 10 维精密定标与 AI 炼金炉，将你的觉察信号转化为生命增值建议。">
-    <meta name="keywords" content="身体资产, 微觉AI, MicroSense, 健康管理, 生物黑客, Biohacking, 生产资料">
-    <meta name="author" content="Fanology">
-
-    <meta property="og:title" content="微觉 AI | 身体资产管理系统">
-    <meta property="og:description" content="身体是唯一的生产资料。开启你的生命资产审计。">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://fanology.github.io/MicroSense-BodyAsset/">
-    
+    <meta name="description" content="微觉 AI (MicroSense AI) 身体资产管理系统：捕捉觉察信号，炼化生命财富。">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700&family=Noto+Sans+SC:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
@@ -31,14 +22,14 @@
         .btn-main { background: var(--amber); color: white; border-radius: 99px; transition: 0.3s; font-weight: bold; }
         .btn-main:hover { background: var(--ink); transform: translateY(-2px); }
         .action-box { background: linear-gradient(135deg, #fff 0%, rgba(212,163,115,0.05) 100%); border: 1px solid rgba(212,163,115,0.2); }
-        .lang-btn { font-size: 10px; padding: 4px 12px; border: 1px solid var(--amber); border-radius: 99px; transition: 0.3s; }
+        .lang-btn { font-size: 10px; padding: 4px 12px; border: 1px solid var(--amber); border-radius: 99px; transition: 0.3s; cursor: pointer; }
         .lang-btn.active { background: var(--amber); color: white; }
     </style>
 </head>
 <body class="p-6 md:p-12">
     <div id="cursor"></div>
 
-    <div id="quizModal" class="overlay">
+    <div id="quizModal" class="overlay" style="display:none;">
         <div class="glass p-10 max-w-xl w-full text-center relative">
             <div class="absolute top-8 right-10 flex gap-2">
                 <button onclick="setLang('zh')" id="lb-zh" class="lang-btn">中</button>
@@ -57,6 +48,7 @@
             <button onclick="closeAside()" class="opacity-30 hover:opacity-100">✕</button>
         </div>
         <div id="hist" class="space-y-6"></div>
+        <button onclick="clearData()" class="mt-10 text-[10px] opacity-20 hover:opacity-100 transition-all uppercase tracking-widest">重置所有资产数据 / Reset All</button>
     </div>
 
     <header class="max-w-7xl mx-auto mb-12 flex justify-between items-end">
@@ -95,18 +87,30 @@
                     <h3 id="t-alchemist-title" class="serif text-3xl text-[--amber]">资产炼金炉</h3>
                     <div class="text-right">
                         <p id="t-pot-label" class="text-[10px] opacity-40">预计单次增值潜力</p>
-                        <p class="text-lg font-bold serif text-[--leaf-green]">+ ¥ 12,850</p>
+                        <p id="potGain" class="text-lg font-bold serif text-[--leaf-green]">+ ¥ 12,850</p>
                     </div>
                 </div>
                 <div id="out" class="flex-grow flex flex-col justify-center border border-dashed border-[--amber]/15 rounded-[40px] p-10 text-center text-[--amber]/30 italic serif leading-loose">
                 </div>
+                <button onclick="openAside()" class="mt-4 text-[10px] uppercase tracking-widest opacity-30 hover:opacity-100">查看历史资产记录 / View Logs</button>
             </div>
         </div>
     </main>
 
     <script>
-        // 自动识别浏览器语言
         let L = navigator.language.startsWith('zh') ? 'zh' : 'en';
+        
+        // --- 核心属性建模逻辑 ---
+        const keywords = {
+            zh: {
+                bad: { words: ["累", "痛", "熬夜", "烦", "饿", "酸", "苦"], impact: [0, -5, -3, -4, -2] }, // 对应五大维度
+                good: { words: ["爽", "舒服", "运动", "拉伸", "睡", "开心", "平静"], impact: [5, 4, 3, 4, 3] }
+            },
+            en: {
+                bad: { words: ["tired", "pain", "late", "angry", "hungry", "stiff", "stress"], impact: [0, -5, -3, -4, -2] },
+                good: { words: ["fresh", "good", "gym", "stretch", "sleep", "happy", "calm"], impact: [5, 4, 3, 4, 3] }
+            }
+        };
 
         const trans = {
             zh: {
@@ -117,7 +121,7 @@
                 idle: "身体是唯一的生产资料。<br>请输入觉察信号，开启资产优化。",
                 historyTitle: "资产增值记录", modalTitle: "身体资产初始定标", modalBtn: "生成资产评估报告",
                 bars: ["气血净值","情绪带宽","专注算力","架构柔韧","代谢效率"],
-                loading: "资产价值重构中...",
+                loading: "正在重构生命资产...",
                 analysis: "【感知解析】", boost: "🔥 即刻增值操作", advice: "【资产提升建议】"
             },
             en: {
@@ -138,15 +142,39 @@
             { zh: "2. 爬完三层楼梯，呼吸恢复平稳的速度？", en: "2. How fast does your breathing recover after 3 flights of stairs?", oZh: ["需很久", "较慢", "极快"], oEn: ["Slow", "Moderate", "Rapid"] },
             { zh: "3. 过去24小时内，情绪受外界影响的波动程度？", en: "3. Emotional volatility over the last 24 hours?", oZh: ["极易烦躁", "偶有起伏", "内心平静"], oEn: ["High", "Occasional", "Calm"] },
             { zh: "4. 坐姿转动脖颈，是否有僵硬或摩擦感？", en: "4. Any stiffness or 'cracking' when rotating your neck?", oZh: ["咔咔作响", "轻微阻力", "丝滑无声"], oEn: ["Stiff", "Slight", "Smooth"] },
-            { zh: "5. 手脚末端在普通室内温度下的表现？", en: "5. Temperature of your hands/feet in normal indoor settings?", oZh: ["常年冰凉", "温度尚可", "温暖有力"], oEn: ["Cold", "Fair", "Warm"] },
-            { zh: "6. 进食后，腹部是否有明显的胀满或疲惫感？", en: "6. Any bloating or lethargy after meals?", oZh: ["经常如此", "偶尔", "能量充沛"], oEn: ["Often", "Rarely", "Energetic"] },
-            { zh: "7. 每天能维持深度思考、高度专注的时间？", en: "7. Duration of deep focus/concentration daily?", oZh: ["不到1h", "2-4h", "4h+"], oEn: ["<1h", "2-4h", "4h+"] },
-            { zh: "8. 面临突发负面压力，你的心理抽离速度？", en: "8. Speed of psychological detachment from sudden stress?", oZh: ["陷入很久", "半天左右", "瞬间觉察"], oEn: ["Stuck", "Few hours", "Instant"] },
-            { zh: "9. 观察镜中的面色（尤其是眼周与法令纹）？", en: "9. Skin appearance (especially eyes and lines)?", oZh: ["暗沉紧绷", "一般", "润泽充盈"], oEn: ["Dull", "Normal", "Radiant"] },
-            { zh: "10. 你是否能清晰感知此时此刻的呼吸深度？", en: "10. Awareness of your current breathing depth?", oZh: ["毫无感觉", "较浅", "深长均匀"], oEn: ["None", "Shallow", "Deep/Even"] }
+            { zh: "5. 进食后，腹部是否有明显的胀满或疲惫感？", en: "5. Any bloating or lethargy after meals?", oZh: ["经常如此", "偶尔", "能量充沛"], oEn: ["Often", "Rarely", "Energetic"] }
         ];
 
-        let scores = [50, 50, 50, 50, 50], history = [];
+        // --- 数据初始化与持久化加载 ---
+        let scores = [50, 50, 50, 50, 50];
+        let history = [];
+        let totalWealth = 0;
+
+        function loadSavedData() {
+            const saved = localStorage.getItem('ms_data');
+            if (saved) {
+                const data = JSON.parse(saved);
+                scores = data.scores || [50,50,50,50,50];
+                history = data.history || [];
+                totalWealth = data.totalWealth || 0;
+                document.getElementById('quizModal').style.display = 'none';
+            } else {
+                document.getElementById('quizModal').style.display = 'flex';
+            }
+            updateUI();
+            renderHist();
+        }
+
+        function saveData() {
+            localStorage.setItem('ms_data', JSON.stringify({ scores, history, totalWealth }));
+        }
+
+        function clearData() {
+            if(confirm("确定要重置所有资产记录吗？这将无法撤销。")) {
+                localStorage.removeItem('ms_data');
+                location.reload();
+            }
+        }
 
         function updateUI() {
             document.getElementById('t-slogan').innerText = trans[L].slogan;
@@ -161,6 +189,7 @@
             document.getElementById('t-history-title').innerText = trans[L].historyTitle;
             document.getElementById('t-modal-title').innerText = trans[L].modalTitle;
             document.getElementById('t-modal-btn').innerText = trans[L].modalBtn;
+            document.getElementById('wealth').innerText = totalWealth.toLocaleString();
             if(!history.length) document.getElementById('out').innerHTML = trans[L].idle;
             
             document.getElementById('lb-zh').className = `lang-btn ${L==='zh'?'active':''}`;
@@ -202,24 +231,36 @@
 
         function finishQuiz() {
             document.getElementById('quizModal').style.display = 'none';
-            scores.forEach((s, i) => updateBar(i, s));
-            document.getElementById('wealth').innerText = "1,520,000"; 
-        }
-
-        function updateBar(i, v) {
-            document.getElementById('b' + i).style.width = v + '%';
-            document.getElementById('v' + i).innerText = Math.round(v) + '%';
+            totalWealth = 1250000;
+            saveData();
+            updateUI();
         }
 
         function refine() {
-            const ui = document.getElementById('uIn'), text = ui.value.trim();
+            const ui = document.getElementById('uIn'), text = ui.value.trim().toLowerCase();
             if(!text) return;
             const out = document.getElementById('out');
             out.innerHTML = `<div class="animate-pulse serif text-[--amber] text-lg">${trans[L].loading}</div>`;
 
             setTimeout(() => {
-                const isPain = text.toLowerCase().includes("痛") || text.toLowerCase().includes("pain") || text.toLowerCase().includes("headache") || text.toLowerCase().includes("stiff") || text.toLowerCase().includes("tired");
-                const report = getReport(isPain);
+                // --- 进化：关键词驱动的属性变更 ---
+                let impact = [1, 1, 1, 1, 1]; // 默认微涨
+                let isGood = true;
+
+                keywords[L].bad.words.forEach(w => {
+                    if(text.includes(w)) { impact = keywords[L].bad.impact; isGood = false; }
+                });
+                keywords[L].good.words.forEach(w => {
+                    if(text.includes(w)) { impact = keywords[L].good.impact; isGood = true; }
+                });
+
+                scores = scores.map((s, i) => Math.min(98, Math.max(10, s + impact[i])));
+                
+                const gain = isGood ? Math.floor(Math.random() * 20000 + 5000) : -Math.floor(Math.random() * 10000);
+                totalWealth += gain;
+                document.getElementById('potGain').innerText = (gain >= 0 ? "+" : "") + " ¥ " + gain.toLocaleString();
+
+                const report = getReport(!isGood);
                 out.innerHTML = `
                     <div class="animate-entry text-left space-y-6">
                         <div class="p-8 rounded-[40px] bg-white border border-[--amber]/10 shadow-sm">
@@ -234,28 +275,30 @@
                             </div>
                         </div>
                     </div>`;
+                
                 history.unshift({ time: new Date().toLocaleTimeString(), title: report.title });
+                saveData();
                 renderHist();
-                scores = scores.map(s => Math.min(98, Math.max(15, Math.round(s + (Math.random() * 6 - 2)))));
                 renderBars();
+                document.getElementById('wealth').innerText = totalWealth.toLocaleString();
                 ui.value = "";
             }, 1200);
         }
 
-        function getReport(isPain) {
-            if(isPain) return {
-                title: L==='zh'?"资产预警：能量泄露评估":"Asset Alert: Energy Leak Evaluation",
-                tags: ["# Loss-Cut", "# Recovery"],
-                analysis: L==='zh'?"身体正在‘交税’。当前的痛感反映了生命能量的无谓损耗。":"Your body is paying 'taxes'. Pain points reflect unnecessary drain of life energy.",
-                solution: L==='zh'?"轻敲痛点周边 30 次，深呼吸，将‘消耗’转化为‘修复’。":"Tap around the area 30 times, breathe deep, turn 'drain' into 'repair'.",
-                advice: L==='zh'?"睡眠是资产自动增值时间，不要在深夜透支利息。":"Sleep is auto-compounding time; don't overdraft your health interest at night."
+        function getReport(isBad) {
+            if(isBad) return {
+                title: L==='zh'?"资产负债预警":"Liability Warning",
+                tags: ["# Loss-Control", "# Repair"],
+                analysis: L==='zh'?"身体正在承担非正常损耗，这种‘坏账’会侵蚀长期净值。":"Your biological asset is suffering abnormal wear. These 'bad debts' erode long-term value.",
+                solution: L==='zh'?"立即进行 3 分钟腹式呼吸，止付能量损耗。":"Take 3 mins of abdominal breathing to stop the energy drain immediately.",
+                advice: L==='zh'?"资产修复优于短期扩张，建议今晚提前 1 小时休息。":"Repair is better than expansion. Sleep 1 hour earlier tonight."
             };
             return {
-                title: L==='zh'?"资产优化：重塑秩序建议":"Asset Optimization: Order Restructuring",
-                tags: ["# High-Growth", "# Clarity"],
-                analysis: L==='zh'?"后台碎片程序过多导致卡顿。当前状态具备高增值潜力。":"Too many background tasks causing lag. Current state has high growth potential.",
-                solution: L==='zh'?"站立拉伸 1 分钟，清除大脑中的意识缓存碎片。":"Stand and stretch for 1 min to clear consciousness cache from your mind.",
-                advice: L==='zh'?"设置每日‘离线窗口’，开启深度资产审计与自我重构。":"Set daily 'Offline Windows' for deep asset auditing and self-reconstruction."
+                title: L==='zh'?"资产稳态优化":"Asset Growth Optimization",
+                tags: ["# Growth", "# Efficiency"],
+                analysis: L==='zh'?"觉察信号显示系统正处于高效重构期，价值潜力正在释放。":"Signals indicate a high-efficiency restructuring phase. Value potential is being released.",
+                solution: L==='zh'?"记录下这种‘轻盈感’，将其固化为资产增值模型。":"Document this 'lightness' and turn it into a reusable growth model.",
+                advice: L==='zh'?"保持当前的节奏，这是实现‘财富自由’的生命基础。":"Keep the rhythm; this is the biological foundation for true freedom."
             };
         }
 
@@ -263,10 +306,11 @@
             document.getElementById('hist').innerHTML = history.map(h => `<div class="p-5 glass border-none bg-gray-50/50 rounded-2xl mb-4"><p class="text-[10px] opacity-30 mb-2">${h.time}</p><p class="text-[10px] text-[--sea-blue] font-bold">${h.title}</p></div>`).join('');
         }
         function openAside() { document.getElementById('aside').classList.add('open'); }
-        function closeAside() { document.getElementById('aside').classList.remove('open'); }
+        function closeAside() { document.getElementById('aside').classList.remove('remove'); }
         document.addEventListener('mousemove', e => { const c = document.getElementById('cursor'); c.style.left = e.clientX + 'px'; c.style.top = e.clientY + 'px'; });
         
-        updateUI();
+        // 初始加载
+        window.onload = loadSavedData;
     </script>
 </body>
 </html>
