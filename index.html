@@ -100,15 +100,14 @@
     <script>
         let L = navigator.language.startsWith('zh') ? 'zh' : 'en';
         
-        // --- 核心属性建模逻辑 ---
         const keywords = {
             zh: {
-                bad: { words: ["累", "痛", "熬夜", "烦", "饿", "酸", "苦"], impact: [0, -5, -3, -4, -2] }, // 对应五大维度
-                good: { words: ["爽", "舒服", "运动", "拉伸", "睡", "开心", "平静"], impact: [5, 4, 3, 4, 3] }
+                bad: { words: ["累", "痛", "熬夜", "烦", "饿", "酸", "苦", "紧", "晕"], impact: [-5, -5, -4, -4, -3] },
+                good: { words: ["爽", "舒服", "运动", "拉伸", "睡", "开心", "平静", "好"], impact: [5, 4, 3, 5, 4] }
             },
             en: {
-                bad: { words: ["tired", "pain", "late", "angry", "hungry", "stiff", "stress"], impact: [0, -5, -3, -4, -2] },
-                good: { words: ["fresh", "good", "gym", "stretch", "sleep", "happy", "calm"], impact: [5, 4, 3, 4, 3] }
+                bad: { words: ["tired", "pain", "late", "angry", "hungry", "stiff", "stress", "dizzy"], impact: [-5, -5, -4, -4, -3] },
+                good: { words: ["fresh", "good", "gym", "stretch", "sleep", "happy", "calm"], impact: [5, 4, 3, 5, 4] }
             }
         };
 
@@ -142,16 +141,18 @@
             { zh: "2. 爬完三层楼梯，呼吸恢复平稳的速度？", en: "2. How fast does your breathing recover after 3 flights of stairs?", oZh: ["需很久", "较慢", "极快"], oEn: ["Slow", "Moderate", "Rapid"] },
             { zh: "3. 过去24小时内，情绪受外界影响的波动程度？", en: "3. Emotional volatility over the last 24 hours?", oZh: ["极易烦躁", "偶有起伏", "内心平静"], oEn: ["High", "Occasional", "Calm"] },
             { zh: "4. 坐姿转动脖颈，是否有僵硬或摩擦感？", en: "4. Any stiffness or 'cracking' when rotating your neck?", oZh: ["咔咔作响", "轻微阻力", "丝滑无声"], oEn: ["Stiff", "Slight", "Smooth"] },
-            { zh: "5. 进食后，腹部是否有明显的胀满或疲惫感？", en: "5. Any bloating or lethargy after meals?", oZh: ["经常如此", "偶尔", "能量充沛"], oEn: ["Often", "Rarely", "Energetic"] }
+            { zh: "5. 手脚末端在普通室内温度下的表现？", en: "5. Temperature of your hands/feet in normal indoor settings?", oZh: ["常年冰凉", "温度尚可", "温暖有力"], oEn: ["Cold", "Fair", "Warm"] },
+            { zh: "6. 进食后，腹部是否有明显的胀满或疲惫感？", en: "6. Any bloating or lethargy after meals?", oZh: ["经常如此", "偶尔", "能量充沛"], oEn: ["Often", "Rarely", "Energetic"] },
+            { zh: "7. 每天能维持深度思考、高度专注的时间？", en: "7. Duration of deep focus daily?", oZh: ["不到1h", "2-4h", "4h+"], oEn: ["<1h", "2-4h", "4h+"] },
+            { zh: "8. 面临突发负面压力，你的心理抽离速度？", en: "8. Speed of psychological detachment from sudden stress?", oZh: ["陷入很久", "半天左右", "瞬间觉察"], oEn: ["Stuck", "Few hours", "Instant"] },
+            { zh: "9. 观察镜中的面色（尤其是眼周与法令纹）？", en: "9. Skin appearance (especially eyes and lines)?", oZh: ["暗沉紧绷", "一般", "润泽充盈"], oEn: ["Dull", "Normal", "Radiant"] },
+            { zh: "10. 你是否能清晰感知此时此刻的呼吸深度？", en: "10. Awareness of your current breathing depth?", oZh: ["毫无感觉", "较浅", "深长均匀"], oEn: ["None", "Shallow", "Deep"] }
         ];
 
-        // --- 数据初始化与持久化加载 ---
-        let scores = [50, 50, 50, 50, 50];
-        let history = [];
-        let totalWealth = 0;
+        let scores = [50, 50, 50, 50, 50], history = [], totalWealth = 0;
 
         function loadSavedData() {
-            const saved = localStorage.getItem('ms_data');
+            const saved = localStorage.getItem('ms_data_v5');
             if (saved) {
                 const data = JSON.parse(saved);
                 scores = data.scores || [50,50,50,50,50];
@@ -166,14 +167,11 @@
         }
 
         function saveData() {
-            localStorage.setItem('ms_data', JSON.stringify({ scores, history, totalWealth }));
+            localStorage.setItem('ms_data_v5', JSON.stringify({ scores, history, totalWealth }));
         }
 
         function clearData() {
-            if(confirm("确定要重置所有资产记录吗？这将无法撤销。")) {
-                localStorage.removeItem('ms_data');
-                location.reload();
-            }
+            if(confirm("确定要重置吗？ / Clear all?")) { localStorage.removeItem('ms_data_v5'); location.reload(); }
         }
 
         function updateUI() {
@@ -191,10 +189,8 @@
             document.getElementById('t-modal-btn').innerText = trans[L].modalBtn;
             document.getElementById('wealth').innerText = totalWealth.toLocaleString();
             if(!history.length) document.getElementById('out').innerHTML = trans[L].idle;
-            
             document.getElementById('lb-zh').className = `lang-btn ${L==='zh'?'active':''}`;
             document.getElementById('lb-en').className = `lang-btn ${L==='en'?'active':''}`;
-            
             renderBars();
             renderQuiz();
         }
@@ -226,12 +222,13 @@
                 b.style.background = i === oi ? 'var(--amber)' : 'transparent';
                 b.style.color = i === oi ? 'white' : 'var(--ink)';
             });
-            scores[qi % 5] = [35, 65, 92][oi];
+            // 简单加权计算
+            scores[qi % 5] = Math.min(100, Math.max(0, scores[qi % 5] + [ -15, 0, 15 ][oi] ));
         }
 
         function finishQuiz() {
             document.getElementById('quizModal').style.display = 'none';
-            totalWealth = 1250000;
+            totalWealth = 1520000;
             saveData();
             updateUI();
         }
@@ -243,73 +240,34 @@
             out.innerHTML = `<div class="animate-pulse serif text-[--amber] text-lg">${trans[L].loading}</div>`;
 
             setTimeout(() => {
-                // --- 进化：关键词驱动的属性变更 ---
-                let impact = [1, 1, 1, 1, 1]; // 默认微涨
-                let isGood = true;
-
-                keywords[L].bad.words.forEach(w => {
-                    if(text.includes(w)) { impact = keywords[L].bad.impact; isGood = false; }
-                });
-                keywords[L].good.words.forEach(w => {
-                    if(text.includes(w)) { impact = keywords[L].good.impact; isGood = true; }
-                });
+                let impact = [1, 1, 1, 1, 1]; let isGood = true;
+                keywords[L].bad.words.forEach(w => { if(text.includes(w)) { impact = keywords[L].bad.impact; isGood = false; } });
+                keywords[L].good.words.forEach(w => { if(text.includes(w)) { impact = keywords[L].good.impact; isGood = true; } });
 
                 scores = scores.map((s, i) => Math.min(98, Math.max(10, s + impact[i])));
-                
-                const gain = isGood ? Math.floor(Math.random() * 20000 + 5000) : -Math.floor(Math.random() * 10000);
+                const gain = isGood ? Math.floor(Math.random() * 20000 + 5000) : -Math.floor(Math.random() * 15000);
                 totalWealth += gain;
                 document.getElementById('potGain').innerText = (gain >= 0 ? "+" : "") + " ¥ " + gain.toLocaleString();
 
                 const report = getReport(!isGood);
-                out.innerHTML = `
-                    <div class="animate-entry text-left space-y-6">
-                        <div class="p-8 rounded-[40px] bg-white border border-[--amber]/10 shadow-sm">
-                            <div class="flex justify-between items-center mb-6">
-                                <h4 class="serif text-xl font-bold text-[--sea-blue]">✨ ${report.title}</h4>
-                                <div class="flex gap-2">${report.tags.map(t => `<span class="tag">${t}</span>`).join('')}</div>
-                            </div>
-                            <div class="space-y-6 text-sm leading-relaxed text-[--ink]/80">
-                                <section><p class="font-bold text-[--sea-blue] mb-1">${trans[L].analysis}</p><p>${report.analysis}</p></section>
-                                <section class="p-6 action-box rounded-2xl border-l-4 border-[--leaf-green]"><p class="font-bold text-[--leaf-green] mb-2 uppercase text-[10px] tracking-widest">${trans[L].boost}</p><p class="italic text-[--ink] font-medium leading-loose">${report.solution}</p></section>
-                                <section><p class="font-bold text-[--sea-blue] mb-1">${trans[L].advice}</p><p>${report.advice}</p></section>
-                            </div>
-                        </div>
-                    </div>`;
+                out.innerHTML = `<div class="animate-entry text-left space-y-6"><div class="p-8 rounded-[40px] bg-white border border-[--amber]/10 shadow-sm"><div class="flex justify-between items-center mb-6"><h4 class="serif text-xl font-bold text-[--sea-blue]">✨ ${report.title}</h4><div class="flex gap-2">${report.tags.map(t => `<span class="tag">${t}</span>`).join('')}</div></div><div class="space-y-6 text-sm leading-relaxed text-[--ink]/80"><section><p class="font-bold text-[--sea-blue] mb-1">${trans[L].analysis}</p><p>${report.analysis}</p></section><section class="p-6 action-box rounded-2xl border-l-4 border-[--leaf-green]"><p class="font-bold text-[--leaf-green] mb-2 uppercase text-[10px] tracking-widest">${trans[L].boost}</p><p class="italic text-[--ink] font-medium leading-loose">${report.solution}</p></section><section><p class="font-bold text-[--sea-blue] mb-1">${trans[L].advice}</p><p>${report.advice}</p></section></div></div></div>`;
                 
                 history.unshift({ time: new Date().toLocaleTimeString(), title: report.title });
-                saveData();
-                renderHist();
-                renderBars();
+                saveData(); renderHist(); renderBars();
                 document.getElementById('wealth').innerText = totalWealth.toLocaleString();
                 ui.value = "";
             }, 1200);
         }
 
         function getReport(isBad) {
-            if(isBad) return {
-                title: L==='zh'?"资产负债预警":"Liability Warning",
-                tags: ["# Loss-Control", "# Repair"],
-                analysis: L==='zh'?"身体正在承担非正常损耗，这种‘坏账’会侵蚀长期净值。":"Your biological asset is suffering abnormal wear. These 'bad debts' erode long-term value.",
-                solution: L==='zh'?"立即进行 3 分钟腹式呼吸，止付能量损耗。":"Take 3 mins of abdominal breathing to stop the energy drain immediately.",
-                advice: L==='zh'?"资产修复优于短期扩张，建议今晚提前 1 小时休息。":"Repair is better than expansion. Sleep 1 hour earlier tonight."
-            };
-            return {
-                title: L==='zh'?"资产稳态优化":"Asset Growth Optimization",
-                tags: ["# Growth", "# Efficiency"],
-                analysis: L==='zh'?"觉察信号显示系统正处于高效重构期，价值潜力正在释放。":"Signals indicate a high-efficiency restructuring phase. Value potential is being released.",
-                solution: L==='zh'?"记录下这种‘轻盈感’，将其固化为资产增值模型。":"Document this 'lightness' and turn it into a reusable growth model.",
-                advice: L==='zh'?"保持当前的节奏，这是实现‘财富自由’的生命基础。":"Keep the rhythm; this is the biological foundation for true freedom."
-            };
+            if(isBad) return { title: L==='zh'?"资产负债预警":"Liability Warning", tags: ["# Loss-Control", "# Repair"], analysis: L==='zh'?"身体正在承担非正常损耗，这种‘坏账’会侵蚀长期净值。":"Abnormal wear detected. These 'bad debts' erode long-term value.", solution: L==='zh'?"立即进行 3 分钟腹式呼吸，止付能量损耗。":"Take 3 mins of deep breathing to stop energy drain.", advice: L==='zh'?"建议今晚提前 1 小时休息。":"Suggest sleeping 1 hour earlier tonight." };
+            return { title: L==='zh'?"资产稳态优化":"Asset Growth Optimization", tags: ["# Growth", "# Efficiency"], analysis: L==='zh'?"觉察信号显示系统正处于高效重构期。":"Signals indicate a high-efficiency phase.", solution: L==='zh'?"记录下这种‘轻盈感’，将其固化。":"Document this 'lightness' into your model.", advice: L==='zh'?"保持当前的节奏。":"Keep the current rhythm." };
         }
 
-        function renderHist() {
-            document.getElementById('hist').innerHTML = history.map(h => `<div class="p-5 glass border-none bg-gray-50/50 rounded-2xl mb-4"><p class="text-[10px] opacity-30 mb-2">${h.time}</p><p class="text-[10px] text-[--sea-blue] font-bold">${h.title}</p></div>`).join('');
-        }
+        function renderHist() { document.getElementById('hist').innerHTML = history.map(h => `<div class="p-5 glass border-none bg-gray-50/50 rounded-2xl mb-4"><p class="text-[10px] opacity-30 mb-2">${h.time}</p><p class="text-[10px] text-[--sea-blue] font-bold">${h.title}</p></div>`).join(''); }
         function openAside() { document.getElementById('aside').classList.add('open'); }
-        function closeAside() { document.getElementById('aside').classList.remove('remove'); }
+        function closeAside() { document.getElementById('aside').classList.remove('open'); }
         document.addEventListener('mousemove', e => { const c = document.getElementById('cursor'); c.style.left = e.clientX + 'px'; c.style.top = e.clientY + 'px'; });
-        
-        // 初始加载
         window.onload = loadSavedData;
     </script>
 </body>
