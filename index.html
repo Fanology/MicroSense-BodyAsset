@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>微觉 AI | MicroSense AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700&family=Noto+Sans+SC:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --amber: #D4A373; --sea-blue: #006994; --leaf-green: #4ade80; --bg: #FFFBF5; --ink: #433422; }
+        body { background: var(--bg); color: var(--ink); font-family: 'Noto Sans SC', sans-serif; cursor: none; overflow-x: hidden; }
+        .serif { font-family: 'Noto Serif SC', serif; }
+        #cursor { position: fixed; width: 10px; height: 10px; background: var(--leaf-green); border-radius: 50%; pointer-events: none; z-index: 10001; box-shadow: 0 0 15px var(--leaf-green); transform: translate(-50%, -50%); transition: transform 0.1s ease-out; }
+        .tide-box { position: relative; height: 14px; background: rgba(0, 105, 148, 0.08); border-radius: 12px; overflow: hidden; }
+        .tide-bar { position: absolute; height: 100%; width: 0%; background: linear-gradient(90deg, #006994, #87CEEB); border-radius: 12px; transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1); opacity: 0.7; }
+        .glass { background: rgba(255,255,255,0.8); backdrop-filter: blur(20px); border: 1px solid rgba(212,163,115,0.15); border-radius: 32px; }
+        .sidebar { position: fixed; right: -400px; top: 0; width: 380px; height: 100%; background: white; z-index: 9999; box-shadow: -10px 0 30px rgba(0,0,0,0.05); transition: 0.4s ease; overflow-y: auto; }
+        .sidebar.open { right: 0; }
+        .overlay { position: fixed; inset: 0; background: rgba(67, 52, 34, 0.5); backdrop-filter: blur(12px); z-index: 10000; display: flex; align-items: center; justify-content: center; }
+        .tag { font-size: 10px; background: rgba(0, 105, 148, 0.06); color: var(--sea-blue); padding: 2px 10px; border-radius: 6px; font-weight: bold; }
+        .btn-main { background: var(--amber); color: white; border-radius: 99px; transition: 0.3s; font-weight: bold; }
+        .btn-main:hover { background: var(--ink); transform: translateY(-2px); }
+        .action-box { background: linear-gradient(135deg, #fff 0%, rgba(212,163,115,0.05) 100%); border: 1px solid rgba(212,163,115,0.2); }
+        .lang-btn { font-size: 10px; padding: 4px 12px; border: 1px solid var(--amber); border-radius: 99px; margin-left: 10px; transition: 0.3s; }
+        .lang-btn.active { background: var(--amber); color: white; }
+    </style>
+</head>
+<body class="p-6 md:p-12">
+    <div id="cursor"></div>
+
+    <div id="quizModal" class="overlay">
+        <div class="glass p-10 max-w-xl w-full text-center relative">
+            <div class="absolute top-8 right-10 flex gap-2">
+                <button onclick="setLang('zh')" id="lb-zh" class="lang-btn active">中</button>
+                <button onclick="setLang('en')" id="lb-en" class="lang-btn">EN</button>
+            </div>
+            <h2 id="t-modal-title" class="serif text-3xl mb-2 text-[--amber]">身体资产初始定标</h2>
+            <p id="t-modal-sub" class="text-[10px] opacity-40 mb-8 tracking-widest uppercase">Biological Asset Evaluation</p>
+            <div id="quizList" class="space-y-8 text-left max-h-[50vh] overflow-y-auto pr-4"></div>
+            <button id="t-modal-btn" onclick="finishQuiz()" class="btn-main w-full py-4 mt-8 shadow-lg">生成资产评估报告</button>
+        </div>
+    </div>
+
+    <div id="aside" class="sidebar p-10">
+        <div class="flex justify-between items-center mb-10">
+            <h3 id="t-history-title" class="serif text-2xl">资产增值记录</h3>
+            <button onclick="closeAside()" class="opacity-30 hover:opacity-100">✕</button>
+        </div>
+        <div id="hist" class="space-y-6"></div>
+    </div>
+
+    <header class="max-w-7xl mx-auto mb-12 flex justify-between items-end">
+        <div>
+            <h1 class="serif text-5xl font-bold text-[--amber]">微觉 AI</h1>
+            <p id="t-slogan" class="mt-4 text-lg opacity-40 serif italic tracking-wide">把健康炼成资产</p>
+        </div>
+        <div class="flex gap-6 items-end">
+            <div class="text-right">
+                <button onclick="toggleLang()" class="text-[10px] font-bold px-4 py-1 border border-[--amber]/30 rounded-full hover:bg-white mb-2 transition-all">中 / EN</button>
+                <div id="t-live" class="text-[10px] font-bold text-[--leaf-green]">● 资产稳定运行</div>
+            </div>
+            <div class="text-right hidden md:block">
+                <p id="t-wealth-label" class="text-[10px] opacity-40 uppercase mb-1">当前资产估值</p>
+                <p class="text-3xl font-bold text-[--amber] serif">¥ <span id="wealth">0</span></p>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div class="lg:col-span-5 space-y-8">
+            <div class="glass p-10">
+                <h3 id="t-input-title" class="serif text-xl font-bold mb-6">🧘 觉察录入</h3>
+                <textarea id="uIn" class="w-full bg-transparent border-none outline-none text-xl serif placeholder-[--amber]/20 leading-relaxed min-h-[160px] resize-none"></textarea>
+                <button id="t-refine-btn" onclick="refine()" class="btn-main w-full py-5 mt-4 text-lg shadow-xl">炼化并提升资产</button>
+            </div>
+            <div class="glass p-10">
+                <h3 id="t-matrix-title" class="serif text-xl mb-8 flex justify-between">资产稳态矩阵 <span class="text-[10px] opacity-30">STABILITY INDEX</span></h3>
+                <div class="space-y-6" id="bars"></div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-7">
+            <div class="glass p-10 h-full flex flex-col min-h-[600px]">
+                <div class="flex justify-between items-start mb-10">
+                    <h3 id="t-alchemist-title" class="serif text-3xl text-[--amber]">资产炼金炉</h3>
+                    <div class="text-right">
+                        <p id="t-pot-label" class="text-[10px] opacity-40">预计单次增值潜力</p>
+                        <p class="text-lg font-bold serif text-[--leaf-green]">+ ¥ 12,850</p>
+                    </div>
+                </div>
+                <div id="out" class="flex-grow flex flex-col justify-center border border-dashed border-[--amber]/15 rounded-[40px] p-10 text-center text-[--amber]/30 italic serif leading-loose">
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // 自动识别浏览器语言
+        let L = navigator.language.startsWith('zh') ? 'zh' : 'en';
+
+        const trans = {
+            zh: {
+                slogan: "把健康炼成资产", live: "● 资产稳定运行", wealthLabel: "当前资产估值",
+                inputTitle: "🧘 觉察录入", inputPh: "描述你当下的体感、痛点或任何细微变化...",
+                refineBtn: "炼化并提升资产", matrixTitle: "资产稳态矩阵",
+                alchemistTitle: "资产炼金炉", potLabel: "预计单次增值潜力",
+                idle: "身体是唯一的生产资料。<br>请输入觉察信号，开启资产优化。",
+                historyTitle: "资产增值记录", modalTitle: "身体资产初始定标", modalBtn: "生成资产评估报告",
+                bars: ["气血净值","情绪带宽","专注算力","架构柔韧","代谢效率"],
+                loading: "资产价值重构中...",
+                analysis: "【感知解析】", boost: "🔥 即刻增值操作", advice: "【资产提升建议】"
+            },
+            en: {
+                slogan: "Turn Health into Assets", live: "● System Online", wealthLabel: "Current Asset Valuation",
+                inputTitle: "🧘 Perception Input", inputPh: "Describe your physical sensations, pain points, or subtle changes...",
+                refineBtn: "Refine & Boost Asset", matrixTitle: "Asset Stability Matrix",
+                alchemistTitle: "Insight Alchemist", potLabel: "Est. Potential Gain",
+                idle: "The body is the only means of production.<br>Input signals to optimize your assets.",
+                historyTitle: "Value Boost Logs", modalTitle: "Initial Asset Calibration", modalBtn: "Generate Audit Report",
+                bars: ["Vitality Reserves","Emotional Bandwidth","Cognitive Power","Structural Agility","Metabolic Flux"],
+                loading: "Re-evaluating assets...",
+                analysis: "[Insight Analysis]", boost: "🔥 Instant Boost", advice: "[Asset Growth Advice]"
+            }
+        };
+
+        const qs = [
+            { zh: "1. 晨起时，是否有明显的‘没睡醒’或身体沉重感？", en: "1. Do you feel heavy or 'not fully awake' upon rising?", oZh: ["沉重滞涩", "一般", "轻盈神清"], oEn: ["Heavy", "Average", "Vitalized"] },
+            { zh: "2. 爬完三层楼梯，呼吸恢复平稳的速度？", en: "2. How fast does your breathing recover after 3 flights of stairs?", oZh: ["需很久", "较慢", "极快"], oEn: ["Slow", "Moderate", "Rapid"] },
+            { zh: "3. 过去24小时内，情绪受外界影响的波动程度？", en: "3. Emotional volatility over the last 24 hours?", oZh: ["极易烦躁", "偶有起伏", "内心平静"], oEn: ["High", "Occasional", "Calm"] },
+            { zh: "4. 坐姿转动脖颈，是否有僵硬或摩擦感？", en: "4. Any stiffness or 'cracking' when rotating your neck?", oZh: ["咔咔作响", "轻微阻力", "丝滑无声"], oEn: ["Stiff", "Slight", "Smooth"] },
+            { zh: "5. 手脚末端在普通室内温度下的表现？", en: "5. Temperature of your hands/feet in normal indoor settings?", oZh: ["常年冰凉", "温度尚可", "温暖有力"], oEn: ["Cold", "Fair", "Warm"] },
+            { zh: "6. 进食后，腹部是否有明显的胀满或疲惫感？", en: "6. Any bloating or lethargy after meals?", oZh: ["经常如此", "偶尔", "能量充沛"], oEn: ["Often", "Rarely", "Energetic"] },
+            { zh: "7. 每天能维持深度思考、高度专注的时间？", en: "7. Duration of deep focus/concentration daily?", oZh: ["不到1h", "2-4h", "4h+"], oEn: ["<1h", "2-4h", "4h+"] },
+            { zh: "8. 面临突发负面压力，你的心理抽离速度？", en: "8. Speed of psychological detachment from sudden stress?", oZh: ["陷入很久", "半天左右", "瞬间觉察"], oEn: ["Stuck", "Few hours", "Instant"] },
+            { zh: "9. 观察镜中的面色（尤其是眼周与法令纹）？", en: "9. Skin appearance (especially eyes and lines)?", oZh: ["暗沉紧绷", "一般", "润泽充盈"], oEn: ["Dull", "Normal", "Radiant"] },
+            { zh: "10. 你是否能清晰感知此时此刻的呼吸深度？", en: "10. Awareness of your current breathing depth?", oZh: ["毫无感觉", "较浅", "深长均匀"], oEn: ["None", "Shallow", "Deep/Even"] }
+        ];
+
+        let scores = [50, 50, 50, 50, 50], history = [];
+
+        function updateUI() {
+            document.getElementById('t-slogan').innerText = trans[L].slogan;
+            document.getElementById('t-live').innerText = trans[L].live;
+            document.getElementById('t-wealth-label').innerText = trans[L].wealthLabel;
+            document.getElementById('t-input-title').innerText = trans[L].inputTitle;
+            document.getElementById('uIn').placeholder = trans[L].inputPh;
+            document.getElementById('t-refine-btn').innerText = trans[L].refineBtn;
+            document.getElementById('t-matrix-title').innerHTML = `${trans[L].matrixTitle} <span class="text-[10px] opacity-30">STABILITY INDEX</span>`;
+            document.getElementById('t-alchemist-title').innerText = trans[L].alchemistTitle;
+            document.getElementById('t-pot-label').innerText = trans[L].potLabel;
+            document.getElementById('t-history-title').innerText = trans[L].historyTitle;
+            document.getElementById('t-modal-title').innerText = trans[L].modalTitle;
+            document.getElementById('t-modal-btn').innerText = trans[L].modalBtn;
+            if(!history.length) document.getElementById('out').innerHTML = trans[L].idle;
+            
+            // 更新按钮状态
+            document.getElementById('lb-zh').className = `lang-btn ${L==='zh'?'active':''}`;
+            document.getElementById('lb-en').className = `lang-btn ${L==='en'?'active':''}`;
+            
+            renderBars();
+            renderQuiz();
+        }
+
+        function setLang(lang) { L = lang; updateUI(); }
+        function toggleLang() { L = (L === 'zh' ? 'en' : 'zh'); updateUI(); }
+
+        function renderQuiz() {
+            const list = document.getElementById('quizList');
+            list.innerHTML = '';
+            qs.forEach((q, i) => {
+                const options = L === 'zh' ? q.oZh : q.oEn;
+                list.innerHTML += `<div class='mb-8'><p class='text-sm font-bold mb-4 text-[--ink]'>${L === 'zh' ? q.zh : q.en}</p>
+                    <div class='grid grid-cols-3 gap-3'>${options.map((opt, idx) => `<button onclick="setQ(${i},${idx})" class="q${i} py-3 text-[10px] border border-[--amber]/20 rounded-xl hover:bg-[--amber]/5 transition-all text-center">${opt}</button>`).join('')}</div></div>`;
+            });
+        }
+
+        function renderBars() {
+            const bc = document.getElementById('bars');
+            bc.innerHTML = '';
+            trans[L].bars.forEach((label, i) => {
+                bc.innerHTML += `<div class='mb-6'><div class='flex justify-between text-[10px] font-bold opacity-60 mb-2'><span>${label}</span><span id="v${i}">${Math.round(scores[i])}%</span></div>
+                    <div class='tide-box'><div class='tide-bar' id="b${i}" style="width:${scores[i]}%"></div></div></div>`;
+            });
+        }
+
+        function setQ(qi, oi) {
+            document.querySelectorAll(`.q${qi}`).forEach((b, i) => {
+                b.style.background = i === oi ? 'var(--amber)' : 'transparent';
+                b.style.color = i === oi ? 'white' : 'var(--ink)';
+            });
+            scores[qi % 5] = [35, 65, 92][oi];
+        }
+
+        function finishQuiz() {
+            document.getElementById('quizModal').style.display = 'none';
+            scores.forEach((s, i) => updateBar(i, s));
+            document.getElementById('wealth').innerText = "1,520,000"; 
+        }
+
+        function updateBar(i, v) {
+            document.getElementById('b' + i).style.width = v + '%';
+            document.getElementById('v' + i).innerText = Math.round(v) + '%';
+        }
+
+        function refine() {
+            const ui = document.getElementById('uIn'), text = ui.value.trim();
+            if(!text) return;
+            const out = document.getElementById('out');
+            out.innerHTML = `<div class="animate-pulse serif text-[--amber] text-lg">${trans[L].loading}</div>`;
+
+            setTimeout(() => {
+                const isPain = text.toLowerCase().includes("痛") || text.toLowerCase().includes("pain") || text.toLowerCase().includes("headache");
+                const report = getReport(isPain);
+                out.innerHTML = `
+                    <div class="animate-entry text-left space-y-6">
+                        <div class="p-8 rounded-[40px] bg-white border border-[--amber]/10 shadow-sm">
+                            <div class="flex justify-between items-center mb-6">
+                                <h4 class="serif text-xl font-bold text-[--sea-blue]">✨ ${report.title}</h4>
+                                <div class="flex gap-2">${report.tags.map(t => `<span class="tag">${t}</span>`).join('')}</div>
+                            </div>
+                            <div class="space-y-6 text-sm leading-relaxed text-[--ink]/80">
+                                <section><p class="font-bold text-[--sea-blue] mb-1">${trans[L].analysis}</p><p>${report.analysis}</p></section>
+                                <section class="p-6 action-box rounded-2xl border-l-4 border-[--leaf-green]"><p class="font-bold text-[--leaf-green] mb-2 uppercase text-[10px] tracking-widest">${trans[L].boost}</p><p class="italic text-[--ink] font-medium leading-loose">${report.solution}</p></section>
+                                <section><p class="font-bold text-[--sea-blue] mb-1">${trans[L].advice}</p><p>${report.advice}</p></section>
+                            </div>
+                        </div>
+                    </div>`;
+                history.unshift({ time: new Date().toLocaleTimeString(), title: report.title });
+                renderHist();
+                scores = scores.map(s => Math.min(98, Math.max(15, Math.round(s + (Math.random() * 6 - 2)))));
+                renderBars();
+                ui.value = "";
+            }, 1200);
+        }
+
+        function getReport(isPain) {
+            if(isPain) return {
+                title: L==='zh'?"资产预警：胆经压力泄露":"Asset Alert: Gallbladder Meridian Leak",
+                tags: ["# Loss-Cut", "# Balance"],
+                analysis: L==='zh'?"身体正在‘交税’。头部压力源于核心排压通道堵塞。":"Body is paying 'taxes'. Head pressure stems from blocked drainage channels.",
+                solution: L==='zh'?"敲击大腿外侧（风市穴）50次，呼气发‘嘘’声。":"Tap outer thighs 50 times, exhale with 'shh' sound.",
+                advice: L==='zh'?"睡眠是资产自动增值时间，不要在深夜透支。":"Sleep is the only auto-compounding time; don't overdraft at night."
+            };
+            return {
+                title: L==='zh'?"资产优化：重塑专注秩序":"Asset Optimization: Restoring Focus",
+                tags: ["# Cognitive", "# Neural"],
+                analysis: L==='zh'?"后台程序过多导致卡顿。碎片信息侵蚀了资产净值。":"Too many background tasks causing lag. Info fragments eroding net worth.",
+                solution: L==='zh'?"站立拉伸，憋气3秒后大口呼气。重复5组。":"Stretch upwards, hold breath 3s, then exhale sharply. 5 reps.",
+                advice: L==='zh'?"设置每日‘离线窗口’，开启深度资产审计。":"Set daily 'Offline Windows' for deep asset auditing."
+            };
+        }
+
+        function renderHist() {
+            document.getElementById('hist').innerHTML = history.map(h => `<div class="p-5 glass border-none bg-gray-50/50 rounded-2xl mb-4"><p class="text-[10px] opacity-30 mb-2">${h.time}</p><p class="text-[10px] text-[--sea-blue] font-bold">${h.title}</p></div>`).join('');
+        }
+        function openAside() { document.getElementById('aside').classList.add('open'); }
+        function closeAside() { document.getElementById('aside').classList.remove('open'); }
+        document.addEventListener('mousemove', e => { const c = document.getElementById('cursor'); c.style.left = e.clientX + 'px'; c.style.top = e.clientY + 'px'; });
+        
+        updateUI();
+    </script>
+</body>
+</html>
