@@ -3,7 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>微觉 AI | MicroSense AI</title>
+    
+    <title>微觉 AI | MicroSense AI - 身体资产管理系统</title>
+    <meta name="description" content="微觉 AI (MicroSense AI) 是一款将身体感知资产化的管理工具。通过 10 维精密定标与 AI 炼金炉，将你的觉察信号转化为生命增值建议。">
+    <meta name="keywords" content="身体资产, 微觉AI, MicroSense, 健康管理, 生物黑客, Biohacking, 生产资料">
+    <meta name="author" content="Fanology">
+
+    <meta property="og:title" content="微觉 AI | 身体资产管理系统">
+    <meta property="og:description" content="身体是唯一的生产资料。开启你的生命资产审计。">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://fanology.github.io/MicroSense-BodyAsset/">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700&family=Noto+Sans+SC:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
@@ -21,7 +31,7 @@
         .btn-main { background: var(--amber); color: white; border-radius: 99px; transition: 0.3s; font-weight: bold; }
         .btn-main:hover { background: var(--ink); transform: translateY(-2px); }
         .action-box { background: linear-gradient(135deg, #fff 0%, rgba(212,163,115,0.05) 100%); border: 1px solid rgba(212,163,115,0.2); }
-        .lang-btn { font-size: 10px; padding: 4px 12px; border: 1px solid var(--amber); border-radius: 99px; margin-left: 10px; transition: 0.3s; }
+        .lang-btn { font-size: 10px; padding: 4px 12px; border: 1px solid var(--amber); border-radius: 99px; transition: 0.3s; }
         .lang-btn.active { background: var(--amber); color: white; }
     </style>
 </head>
@@ -31,7 +41,7 @@
     <div id="quizModal" class="overlay">
         <div class="glass p-10 max-w-xl w-full text-center relative">
             <div class="absolute top-8 right-10 flex gap-2">
-                <button onclick="setLang('zh')" id="lb-zh" class="lang-btn active">中</button>
+                <button onclick="setLang('zh')" id="lb-zh" class="lang-btn">中</button>
                 <button onclick="setLang('en')" id="lb-en" class="lang-btn">EN</button>
             </div>
             <h2 id="t-modal-title" class="serif text-3xl mb-2 text-[--amber]">身体资产初始定标</h2>
@@ -153,7 +163,6 @@
             document.getElementById('t-modal-btn').innerText = trans[L].modalBtn;
             if(!history.length) document.getElementById('out').innerHTML = trans[L].idle;
             
-            // 更新按钮状态
             document.getElementById('lb-zh').className = `lang-btn ${L==='zh'?'active':''}`;
             document.getElementById('lb-en').className = `lang-btn ${L==='en'?'active':''}`;
             
@@ -209,7 +218,7 @@
             out.innerHTML = `<div class="animate-pulse serif text-[--amber] text-lg">${trans[L].loading}</div>`;
 
             setTimeout(() => {
-                const isPain = text.toLowerCase().includes("痛") || text.toLowerCase().includes("pain") || text.toLowerCase().includes("headache");
+                const isPain = text.toLowerCase().includes("痛") || text.toLowerCase().includes("pain") || text.toLowerCase().includes("headache") || text.toLowerCase().includes("stiff") || text.toLowerCase().includes("tired");
                 const report = getReport(isPain);
                 out.innerHTML = `
                     <div class="animate-entry text-left space-y-6">
@@ -235,18 +244,18 @@
 
         function getReport(isPain) {
             if(isPain) return {
-                title: L==='zh'?"资产预警：胆经压力泄露":"Asset Alert: Gallbladder Meridian Leak",
-                tags: ["# Loss-Cut", "# Balance"],
-                analysis: L==='zh'?"身体正在‘交税’。头部压力源于核心排压通道堵塞。":"Body is paying 'taxes'. Head pressure stems from blocked drainage channels.",
-                solution: L==='zh'?"敲击大腿外侧（风市穴）50次，呼气发‘嘘’声。":"Tap outer thighs 50 times, exhale with 'shh' sound.",
-                advice: L==='zh'?"睡眠是资产自动增值时间，不要在深夜透支。":"Sleep is the only auto-compounding time; don't overdraft at night."
+                title: L==='zh'?"资产预警：能量泄露评估":"Asset Alert: Energy Leak Evaluation",
+                tags: ["# Loss-Cut", "# Recovery"],
+                analysis: L==='zh'?"身体正在‘交税’。当前的痛感反映了生命能量的无谓损耗。":"Your body is paying 'taxes'. Pain points reflect unnecessary drain of life energy.",
+                solution: L==='zh'?"轻敲痛点周边 30 次，深呼吸，将‘消耗’转化为‘修复’。":"Tap around the area 30 times, breathe deep, turn 'drain' into 'repair'.",
+                advice: L==='zh'?"睡眠是资产自动增值时间，不要在深夜透支利息。":"Sleep is auto-compounding time; don't overdraft your health interest at night."
             };
             return {
-                title: L==='zh'?"资产优化：重塑专注秩序":"Asset Optimization: Restoring Focus",
-                tags: ["# Cognitive", "# Neural"],
-                analysis: L==='zh'?"后台程序过多导致卡顿。碎片信息侵蚀了资产净值。":"Too many background tasks causing lag. Info fragments eroding net worth.",
-                solution: L==='zh'?"站立拉伸，憋气3秒后大口呼气。重复5组。":"Stretch upwards, hold breath 3s, then exhale sharply. 5 reps.",
-                advice: L==='zh'?"设置每日‘离线窗口’，开启深度资产审计。":"Set daily 'Offline Windows' for deep asset auditing."
+                title: L==='zh'?"资产优化：重塑秩序建议":"Asset Optimization: Order Restructuring",
+                tags: ["# High-Growth", "# Clarity"],
+                analysis: L==='zh'?"后台碎片程序过多导致卡顿。当前状态具备高增值潜力。":"Too many background tasks causing lag. Current state has high growth potential.",
+                solution: L==='zh'?"站立拉伸 1 分钟，清除大脑中的意识缓存碎片。":"Stand and stretch for 1 min to clear consciousness cache from your mind.",
+                advice: L==='zh'?"设置每日‘离线窗口’，开启深度资产审计与自我重构。":"Set daily 'Offline Windows' for deep asset auditing and self-reconstruction."
             };
         }
 
